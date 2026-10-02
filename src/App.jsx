@@ -1,122 +1,1491 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { dailyTasks } from "./data/tasks";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [page, setPage] = useState("Dashboard");
+
+  const [name, setName] = useState("kusumanjali");
+
+  // Remember username for next login
+  const [username, setUsername] = useState(
+    localStorage.getItem("grow100_username") || ""
+  );
+
+  const [password, setPassword] = useState("");
+
+  const [rememberMe, setRememberMe] = useState(
+    localStorage.getItem("grow100_remember") === "true"
+  );
+
+  const [loginError, setLoginError] = useState("");
+
+  const [currentDay, setCurrentDay] = useState(1);
+
+  const [completed, setCompleted] = useState(() => {
+    return JSON.parse(localStorage.getItem("grow100")) || {};
+  });
+
+  const getTaskKey = (day, task) => {
+    return `day${day}_${task}`;
+  };
+
+  const toggleTask = (taskKey) => {
+    const updated = {
+      ...completed,
+      [taskKey]: !completed[taskKey],
+    };
+
+    setCompleted(updated);
+
+    localStorage.setItem(
+      "grow100",
+      JSON.stringify(updated)
+    );
+  };
+
+  const getDayTasks = (day) => {
+    return [
+      getTaskKey(day, "coding"),
+      getTaskKey(day, "aptitude"),
+
+      ...dailyTasks.selfImprovement.map(
+        (_, index) =>
+          getTaskKey(day, `self_${index}`)
+      ),
+
+      ...dailyTasks.selfCare.map(
+        (_, index) =>
+          getTaskKey(day, `care_${index}`)
+      ),
+    ];
+  };
+
+  const todayTasks = getDayTasks(currentDay);
+
+  const todayCount = todayTasks.filter(
+    (task) => completed[task]
+  ).length;
+
+  // LOGIN
+  const handleLogin = () => {
+    setLoginError("");
+
+    const cleanUsername = username.trim();
+
+    if (cleanUsername.length < 3) {
+      setLoginError(
+        "Username must contain at least 3 characters."
+      );
+      return;
+    }
+
+    if (password.length < 8) {
+      setLoginError(
+        "Password must contain at least 8 characters."
+      );
+      return;
+    }
+
+    // Remember username only
+    if (rememberMe) {
+      localStorage.setItem(
+        "grow100_username",
+        cleanUsername
+      );
+
+      localStorage.setItem(
+        "grow100_remember",
+        "true"
+      );
+    } else {
+      localStorage.removeItem(
+        "grow100_username"
+      );
+
+      localStorage.removeItem(
+        "grow100_remember"
+      );
+    }
+
+    setName(cleanUsername);
+
+    setLoggedIn(true);
+  };
+
+  const resetProgress = () => {
+    const confirmReset = window.confirm(
+      "Are you sure you want to delete all your progress?"
+    );
+
+    if (confirmReset) {
+      localStorage.removeItem("grow100");
+
+      setCompleted({});
+
+      setCurrentDay(1);
+    }
+  };
+
+  // LOGIN PAGE
+  if (!loggedIn) {
+    return (
+      <div className="login-page">
+
+        <div className="login-decoration decoration-one"></div>
+        <div className="login-decoration decoration-two"></div>
+        <div className="login-decoration decoration-three"></div>
+
+        <div className="login-left">
+
+          <div className="brand-logo">
+            ✓ Grow100
+          </div>
+
+          <h1>
+            100 Day
+            <br />
+            Challenge 🚀
+          </h1>
+
+          <p className="subtitle">
+            YOUR JOURNEY STARTS HERE
+          </p>
+
+          <p className="login-description">
+            Build better habits, improve your skills
+            and become a better version of yourself
+            one day at a time.
+          </p>
+
+          <div className="numbers">
+
+            <div>
+              <b>100</b>
+              <span>Days</span>
+            </div>
+
+            <div>
+              <b>4</b>
+              <span>Challenges</span>
+            </div>
+
+            <div>
+              <b>1</b>
+              <span>Goal</span>
+            </div>
+
+          </div>
+
+          <p className="quote">
+            “You don't need to be perfect.
+            You just need to be consistent.”
+          </p>
+
+        </div>
+
+        <div className="login-card">
+
+          <div className="login-icon">
+            🚀
+          </div>
+
+          <h2>
+            WELCOME BACK 👋
+          </h2>
+
+          <p className="login-subtitle">
+            Start your 100-day transformation.
+          </p>
+
+          {loginError && (
+            <div className="login-error">
+              ❌ {loginError}
+            </div>
+          )}
+
+          <label>
+            Username
+          </label>
+
+          <input
+            type="text"
+            placeholder="Enter your username"
+            value={username}
+            autoComplete="username"
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setLoginError("");
+            }}
+          />
+
+          <label>
+            Password
+          </label>
+
+          <input
+            type="password"
+            placeholder="Minimum 8 characters"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setLoginError("");
+            }}
+          />
+
+          {/* Remember Me */}
+
+          <div className="remember-row">
+
+            <label className="remember-label">
+
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) =>
+                  setRememberMe(
+                    e.target.checked
+                  )
+                }
+              />
+
+              <span>
+                Remember me
+              </span>
+
+            </label>
+
+          </div>
+
+          <button
+            className="login-button"
+            onClick={handleLogin}
+          >
+            Start My Journey 🚀
+          </button>
+
+          <p className="bottom-text">
+            🔒 Your journey starts with one small step.
+          </p>
+
+        </div>
+
+      </div>
+    );
+  }
+
+  // MAIN APPLICATION
+  return (
+    <div className="app">
+
+      <aside>
+
+        <div className="sidebar-logo">
+          ✓ Grow100
+        </div>
+
+        <p className="sidebar-subtitle">
+          100 DAY CHALLENGE
+        </p>
+
+        {[
+          ["🏠", "Dashboard"],
+          ["📅", "100-Day Calendar"],
+          ["💻", "Coding"],
+          ["🧠", "Aptitude"],
+          ["🌱", "Self-Improvement"],
+          ["🧴", "Self-Care"],
+          ["📊", "Progress"],
+          ["🏆", "Achievements"],
+          ["⚙️", "Settings"],
+        ].map(([icon, item]) => (
+          <button
+            key={item}
+            className={
+              page === item
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setPage(item)
+            }
+          >
+            <span>{icon}</span>
+            {item}
+          </button>
+        ))}
+
+        <div className="side-bottom">
+          Small steps every day.
+          <br />
+          Keep growing. 🌱
+        </div>
+
+      </aside>
+
+      <main className={`page-main page-${page.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}>
+
+        <header>
+
+          <div>
+
+            <p className="header-small">
+              100 DAY CHALLENGE
+            </p>
+
+            <h1>
+              {page}
+            </h1>
+
+          </div>
+
+          <div className="user-welcome">
+            Welcome, {name} 👋
+          </div>
+
+        </header>
+
+        {page === "Dashboard" && (
+          <Dashboard
+            name={name}
+            day={currentDay}
+            count={todayCount}
+            completed={completed}
+            toggleTask={toggleTask}
+          />
+        )}
+
+        {page === "100-Day Calendar" && (
+          <Calendar
+            completed={completed}
+            currentDay={currentDay}
+            setCurrentDay={setCurrentDay}
+          />
+        )}
+
+        {page === "Coding" && (
+          <TaskPage
+            title="💻 Coding"
+            task="coding"
+            day={currentDay}
+            completed={completed}
+            toggleTask={toggleTask}
+          />
+        )}
+
+        {page === "Aptitude" && (
+          <TaskPage
+            title="🧠 Aptitude"
+            task="aptitude"
+            day={currentDay}
+            completed={completed}
+            toggleTask={toggleTask}
+          />
+        )}
+
+        {page === "Self-Improvement" && (
+          <MultipleTasks
+            title="🌱 Self-Improvement"
+            tasks={dailyTasks.selfImprovement}
+            type="self"
+            day={currentDay}
+            completed={completed}
+            toggleTask={toggleTask}
+          />
+        )}
+
+        {page === "Self-Care" && (
+          <MultipleTasks
+            title="🧴 Self-Care"
+            tasks={dailyTasks.selfCare}
+            type="care"
+            day={currentDay}
+            completed={completed}
+            toggleTask={toggleTask}
+          />
+        )}
+
+        {page === "Progress" && (
+          <Progress
+            completed={completed}
+            currentDay={currentDay}
+          />
+        )}
+
+        {page === "Achievements" && (
+          <Achievements
+            completed={completed}
+          />
+        )}
+
+        {page === "Settings" && (
+          <Settings
+            name={name}
+            setName={setName}
+            logout={() =>
+              setLoggedIn(false)
+            }
+            resetProgress={resetProgress}
+          />
+        )}
+
+      </main>
+
+    </div>
+  );
+}
+
+
+// =========================
+// DASHBOARD
+// =========================
+
+function Dashboard({
+  name,
+  day,
+  count,
+  completed,
+  toggleTask,
+}) {
+
+  const taskKey = (task) =>
+    `day${day}_${task}`;
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+
+      <section className="welcome">
+
         <div>
-          <h1>100 Days Challenge</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+
+          <p className="welcome-label">
+            DAY {day} OF 100
           </p>
+
+          <h2>
+            Keep going, {name}! ✨
+          </h2>
+
+          <p>
+            Small steps every day lead to big results.
+          </p>
+
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+
+        <div className="welcome-icon">
+          🌱
+        </div>
+
       </section>
 
-      <div className="ticks"></div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <div className="stats">
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        <div>
+          <b>
+            DAY {day}
+          </b>
+
+          <span>
+            Current Day
+          </span>
+        </div>
+
+        <div>
+          <b>
+            {count}/11
+          </b>
+
+          <span>
+            Today's Tasks
+          </span>
+        </div>
+
+        <div>
+          <b>
+            {Math.round(
+              (count / 11) * 100
+            )}%
+          </b>
+
+          <span>
+            Today Progress
+          </span>
+        </div>
+
+      </div>
+
+
+      <h2 className="section-title">
+        Today's Mission 🎯
+      </h2>
+
+
+      <div className="task-grid">
+
+        <CheckTask
+          text="💻 Coding Practice"
+          checked={
+            completed[
+              taskKey("coding")
+            ]
+          }
+          onClick={() =>
+            toggleTask(
+              taskKey("coding")
+            )
+          }
+        />
+
+        <CheckTask
+          text="🧠 Aptitude Practice"
+          checked={
+            completed[
+              taskKey("aptitude")
+            ]
+          }
+          onClick={() =>
+            toggleTask(
+              taskKey("aptitude")
+            )
+          }
+        />
+
+        {dailyTasks.selfImprovement.map(
+          (task, index) => {
+
+            const key =
+              taskKey(
+                `self_${index}`
+              );
+
+            return (
+              <CheckTask
+                key={task}
+                text={task}
+                checked={
+                  completed[key]
+                }
+                onClick={() =>
+                  toggleTask(key)
+                }
+              />
+            );
+
+          }
+        )}
+
+        {dailyTasks.selfCare.map(
+          (task, index) => {
+
+            const key =
+              taskKey(
+                `care_${index}`
+              );
+
+            return (
+              <CheckTask
+                key={task}
+                text={task}
+                checked={
+                  completed[key]
+                }
+                onClick={() =>
+                  toggleTask(key)
+                }
+              />
+            );
+
+          }
+        )}
+
+      </div>
+
     </>
-  )
+  );
 }
 
-export default App
+
+// =========================
+// CHECK TASK
+// =========================
+
+function CheckTask({
+  text,
+  checked,
+  onClick,
+}) {
+
+  return (
+    <div
+      className={
+        `task ${
+          checked ? "done" : ""
+        }`
+      }
+      onClick={onClick}
+    >
+
+      <span className="task-check">
+        {checked ? "✓" : "○"}
+      </span>
+
+      <span>
+        {text}
+      </span>
+
+    </div>
+  );
+}
+
+
+// =========================
+// CODING / APTITUDE
+// =========================
+
+function TaskPage({
+  title,
+  task,
+  day,
+  completed,
+  toggleTask,
+}) {
+
+  const key =
+    `day${day}_${task}`;
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        {task === "coding"
+          ? "💻"
+          : "🧠"}
+      </div>
+
+      <h2>
+        {title}
+      </h2>
+
+      <p className="day-label">
+        DAY {day}
+      </p>
+
+      <div
+        className={
+          `big-task ${
+            completed[key]
+              ? "done"
+              : ""
+          }`
+        }
+        onClick={() =>
+          toggleTask(key)
+        }
+      >
+        {completed[key]
+          ? "✅ Completed Today"
+          : "⬜ Mark as Completed"}
+      </div>
+
+      <h3>
+        Today's Status
+      </h3>
+
+      <p>
+        {completed[key]
+          ? "Great job! You completed today's task 🎉"
+          : "Not completed yet. You can do it! 💪"}
+      </p>
+
+      <div className="question">
+        💡 What small action can you take today
+        to become better?
+      </div>
+
+    </div>
+  );
+}
+
+
+// =========================
+// MULTIPLE TASKS
+// =========================
+
+function MultipleTasks({
+  title,
+  tasks,
+  type,
+  day,
+  completed,
+  toggleTask,
+}) {
+
+  const count =
+    tasks.filter(
+      (_, index) =>
+        completed[
+          `day${day}_${type}_${index}`
+        ]
+    ).length;
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        {type === "self"
+          ? "🌱"
+          : "🧴"}
+      </div>
+
+      <h2>
+        {title}
+      </h2>
+
+      <p className="day-label">
+        Day {day} • {count}/{tasks.length} completed
+      </p>
+
+      <div className="multiple-task-list">
+
+        {tasks.map(
+          (task, index) => {
+
+            const key =
+              `day${day}_${type}_${index}`;
+
+            return (
+              <CheckTask
+                key={task}
+                text={task}
+                checked={
+                  completed[key]
+                }
+                onClick={() =>
+                  toggleTask(key)
+                }
+              />
+            );
+
+          }
+        )}
+
+      </div>
+
+      <div className="question">
+        🌟 What is one thing you can improve today?
+      </div>
+
+    </div>
+  );
+}
+
+
+// =========================
+// CALENDAR
+// =========================
+
+function Calendar({
+  completed,
+  currentDay,
+  setCurrentDay,
+}) {
+
+  const getDayTasks = (day) => {
+
+    return [
+      `day${day}_coding`,
+      `day${day}_aptitude`,
+
+      ...dailyTasks.selfImprovement.map(
+        (_, index) =>
+          `day${day}_self_${index}`
+      ),
+
+      ...dailyTasks.selfCare.map(
+        (_, index) =>
+          `day${day}_care_${index}`
+      ),
+    ];
+  };
+
+
+  const getDayProgress = (day) => {
+
+    const tasks =
+      getDayTasks(day);
+
+    return tasks.filter(
+      (task) =>
+        completed[task]
+    ).length;
+  };
+
+
+  const selectedProgress =
+    getDayProgress(currentDay);
+
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        📅
+      </div>
+
+      <h2>
+        100-Day Calendar
+      </h2>
+
+      <p>
+        Track your journey from Day 1 to Day 100.
+      </p>
+
+
+      <div className="calendar">
+
+        {Array.from(
+          { length: 100 },
+          (_, index) => {
+
+            const day =
+              index + 1;
+
+            const progress =
+              getDayProgress(day);
+
+            let className =
+              "calendar-day";
+
+            if (progress === 11) {
+              className += " complete";
+            }
+            else if (progress > 0) {
+              className += " partial";
+            }
+
+            if (currentDay === day) {
+              className += " selected";
+            }
+
+            return (
+              <div
+                key={day}
+                className={className}
+                onClick={() =>
+                  setCurrentDay(day)
+                }
+              >
+                {day}
+              </div>
+            );
+          }
+        )}
+
+      </div>
+
+
+      <div className="day-details">
+
+        <h2>
+          Day {currentDay}
+        </h2>
+
+        <p>
+          Progress:
+          <strong>
+            {" "}
+            {selectedProgress}/11
+          </strong>
+        </p>
+
+
+        <div className="calendar-tasks">
+
+          <div>
+            💻 Coding
+
+            <span>
+              {completed[
+                `day${currentDay}_coding`
+              ]
+                ? "✅"
+                : "⬜"}
+            </span>
+
+          </div>
+
+
+          <div>
+            🧠 Aptitude
+
+            <span>
+              {completed[
+                `day${currentDay}_aptitude`
+              ]
+                ? "✅"
+                : "⬜"}
+            </span>
+
+          </div>
+
+
+          {dailyTasks.selfImprovement.map(
+            (task, index) => (
+
+              <div key={task}>
+
+                {task}
+
+                <span>
+                  {completed[
+                    `day${currentDay}_self_${index}`
+                  ]
+                    ? "✅"
+                    : "⬜"}
+                </span>
+
+              </div>
+
+            )
+          )}
+
+
+          {dailyTasks.selfCare.map(
+            (task, index) => (
+
+              <div key={task}>
+
+                {task}
+
+                <span>
+                  {completed[
+                    `day${currentDay}_care_${index}`
+                  ]
+                    ? "✅"
+                    : "⬜"}
+                </span>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+
+        <div className="question">
+          🌟 What can you do today that your
+          future self will thank you for?
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+// =========================
+// PROGRESS
+// =========================
+
+function Progress({
+  completed,
+  currentDay,
+}) {
+
+  const getDayProgress = (day) => {
+
+    const tasks = [
+      `day${day}_coding`,
+      `day${day}_aptitude`,
+
+      ...dailyTasks.selfImprovement.map(
+        (_, index) =>
+          `day${day}_self_${index}`
+      ),
+
+      ...dailyTasks.selfCare.map(
+        (_, index) =>
+          `day${day}_care_${index}`
+      ),
+    ];
+
+    return tasks.filter(
+      (task) =>
+        completed[task]
+    ).length;
+  };
+
+
+  const completedDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        getDayProgress(day) === 11
+    ).length;
+
+
+  const todayProgress =
+    getDayProgress(currentDay);
+
+
+  const codingDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        completed[
+          `day${day}_coding`
+        ]
+    ).length;
+
+
+  const aptitudeDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        completed[
+          `day${day}_aptitude`
+        ]
+    ).length;
+
+
+  let currentStreak = 0;
+
+
+  for (
+    let day = currentDay;
+    day >= 1;
+    day--
+  ) {
+
+    if (
+      getDayProgress(day) === 11
+    ) {
+      currentStreak++;
+    }
+    else {
+      break;
+    }
+
+  }
+
+
+  const overallPercentage =
+    completedDays;
+
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        📊
+      </div>
+
+      <h2>
+        See how far you have come.
+      </h2>
+
+
+      <div className="progress-box">
+
+        <h1>
+          {overallPercentage}%
+        </h1>
+
+        <p>
+          Overall challenge progress
+        </p>
+
+
+        <div className="progress">
+
+          <div
+            style={{
+              width:
+                `${overallPercentage}%`,
+            }}
+          />
+
+        </div>
+
+      </div>
+
+
+      <div className="stats">
+
+        <div>
+          <b>{completedDays}</b>
+          <span>Completed Days</span>
+        </div>
+
+        <div>
+          <b>{currentStreak}</b>
+          <span>Current Streak</span>
+        </div>
+
+        <div>
+          <b>{codingDays}</b>
+          <span>Coding Days</span>
+        </div>
+
+        <div>
+          <b>{aptitudeDays}</b>
+          <span>Aptitude Days</span>
+        </div>
+
+        <div>
+          <b>{todayProgress}/11</b>
+          <span>Day {currentDay} Progress</span>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+
+// =========================
+// ACHIEVEMENTS
+// =========================
+
+function Achievements({
+  completed,
+}) {
+
+  const getDayProgress = (day) => {
+
+    const tasks = [
+      `day${day}_coding`,
+      `day${day}_aptitude`,
+
+      ...dailyTasks.selfImprovement.map(
+        (_, index) =>
+          `day${day}_self_${index}`
+      ),
+
+      ...dailyTasks.selfCare.map(
+        (_, index) =>
+          `day${day}_care_${index}`
+      ),
+    ];
+
+    return tasks.filter(
+      (task) =>
+        completed[task]
+    ).length;
+  };
+
+
+  const completedDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        getDayProgress(day) === 11
+    );
+
+
+  const codingDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        completed[
+          `day${day}_coding`
+        ]
+    ).length;
+
+
+  const aptitudeDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        completed[
+          `day${day}_aptitude`
+        ]
+    ).length;
+
+
+  const selfImprovementDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        dailyTasks.selfImprovement.every(
+          (_, index) =>
+            completed[
+              `day${day}_self_${index}`
+            ]
+        )
+    ).length;
+
+
+  const selfCareDays =
+    Array.from(
+      { length: 100 },
+      (_, index) => index + 1
+    ).filter(
+      (day) =>
+        dailyTasks.selfCare.every(
+          (_, index) =>
+            completed[
+              `day${day}_care_${index}`
+            ]
+        )
+    ).length;
+
+
+  let maxStreak = 0;
+  let streak = 0;
+
+
+  for (
+    let day = 1;
+    day <= 100;
+    day++
+  ) {
+
+    if (
+      getDayProgress(day) === 11
+    ) {
+
+      streak++;
+
+      if (streak > maxStreak) {
+        maxStreak = streak;
+      }
+
+    }
+    else {
+      streak = 0;
+    }
+
+  }
+
+
+  const achievements = [
+    ["💻", "First Coding Day", codingDays >= 1],
+    ["🧠", "First Aptitude Day", aptitudeDays >= 1],
+    ["🌱", "10 Habit Days", selfImprovementDays >= 10],
+    ["🧴", "10 Self-Care Days", selfCareDays >= 10],
+    ["🔥", "3-Day Streak", maxStreak >= 3],
+    ["🔥", "7-Day Streak", maxStreak >= 7],
+    ["🏆", "50 Days", completedDays.length >= 50],
+    ["👑", "100 Days", completedDays.length >= 100],
+  ];
+
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        🏆
+      </div>
+
+      <h2>
+        Achievements
+      </h2>
+
+
+      <div className="achievement-grid">
+
+        {achievements.map(
+          ([icon, title, unlocked]) => (
+
+            <div
+              key={title}
+              className={
+                `achievement ${
+                  unlocked
+                    ? "unlocked"
+                    : ""
+                }`
+              }
+            >
+
+              <span>
+                {unlocked
+                  ? icon
+                  : "🔒"}
+              </span>
+
+              <h3>
+                {title}
+              </h3>
+
+              <p>
+                {unlocked
+                  ? "Unlocked! 🎉"
+                  : "Keep going!"}
+              </p>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    </div>
+  );
+}
+
+
+// =========================
+// SETTINGS
+// =========================
+
+function Settings({
+  name,
+  setName,
+  logout,
+  resetProgress,
+}) {
+
+  const [saved, setSaved] =
+    useState(false);
+
+
+  const saveChanges = () => {
+
+    setSaved(true);
+
+    setTimeout(
+      () => setSaved(false),
+      2000
+    );
+  };
+
+
+  const exportProgress = () => {
+
+    const data =
+      localStorage.getItem("grow100");
+
+
+    const blob =
+      new Blob(
+        [data || "{}"],
+        {
+          type: "application/json",
+        }
+      );
+
+
+    const url =
+      URL.createObjectURL(blob);
+
+
+    const a =
+      document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+      "grow100-progress.json";
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+
+  return (
+    <div className="page-card">
+
+      <div className="page-icon">
+        ⚙️
+      </div>
+
+      <h2>
+        Settings
+      </h2>
+
+
+      <label>
+        Name
+      </label>
+
+
+      <input
+        value={name}
+        onChange={(e) =>
+          setName(e.target.value)
+        }
+      />
+
+
+      <p>
+        Challenge start date:
+        <strong>
+          {" "}01-10-2026
+        </strong>
+      </p>
+
+
+      <p>
+        Your progress is stored in this
+        browser using LocalStorage.
+      </p>
+
+
+      <button
+        className="save"
+        onClick={saveChanges}
+      >
+        Save Changes
+      </button>
+
+
+      {saved && (
+        <p className="success">
+          ✅ Changes saved!
+        </p>
+      )}
+
+
+      <button
+        className="save"
+        onClick={exportProgress}
+      >
+        📥 Export Progress
+      </button>
+
+
+      <button
+        className="logout"
+        onClick={resetProgress}
+      >
+        🗑️ Reset Everything
+      </button>
+
+
+      <button
+        className="logout"
+        onClick={logout}
+      >
+        Logout
+      </button>
+
+    </div>
+  );
+}
+
+
+export default App;

@@ -72,6 +72,35 @@ def register():
 
 
 # Home API
+# Login API
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json()
+
+    username = data.get("username")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({
+            "error": "Username and password are required"
+        }), 400
+
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        return jsonify({
+            "error": "Invalid username or password"
+        }), 401
+
+    if user.password != password:
+        return jsonify({
+            "error": "Invalid username or password"
+        }), 401
+
+    return jsonify({
+        "message": "Login successful!",
+        "username": user.username
+    }), 200
 @app.route("/")
 def home():
     return jsonify({

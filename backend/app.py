@@ -24,8 +24,12 @@ app.config["SQLALCHEMY_DATABASE_URI"] = mysql_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-
-
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+with app.app_context():
+    db.create_all()
 @app.route("/")
 def home():
     return jsonify({

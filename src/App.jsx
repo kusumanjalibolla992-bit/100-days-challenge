@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { dailyTasks } from "./data/tasks";
 import "./App.css";
-
+const API_URL = "https://100-days-challenge-production.up.railway.app";
 function App() {
+  console.log("Backend URL:", API_URL);
+  fetch(`${API_URL}/`)
+  .then((response) => response.json())
+  .then((data) => console.log("Backend Response:", data))
+  .catch((error) => console.error("Backend Error:", error));
   const [loggedIn, setLoggedIn] = useState(false);
   const [page, setPage] = useState("Dashboard");
 

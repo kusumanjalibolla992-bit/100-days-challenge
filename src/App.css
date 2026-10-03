@@ -24,6 +24,14 @@ body {
 button,
 input {
   font-family: inherit;
+  color: #222 !important;
+  background-color: #ffffff !important;
+  caret-color: #222 !important;
+}
+
+input::placeholder {
+  color: #777 !important;
+  opacity: 1;
 }
 
 

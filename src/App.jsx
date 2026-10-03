@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { dailyTasks } from "./data/tasks";
 import "./App.css";
-import { useEffect, useState } from "react";
-import { dailyTasks } from "./data/tasks";
-import "./App.css";
 
 const API_URL = "https://100-days-challenge-production.up.railway.app";
 
